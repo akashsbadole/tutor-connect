@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Search, Menu, X, GraduationCap, LogOut, LayoutDashboard } from "lucide-react";
+import { Search, Menu, X, GraduationCap, LogOut, MessageSquare } from "lucide-react";
 import { useAuth } from "./AuthProvider";
 
 const Navbar = () => {

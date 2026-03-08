@@ -46,22 +46,81 @@ const Index = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchFeatured = async () => {
+    const fetchAll = async () => {
+      // Featured tutors
       const { data: tps } = await supabase.from("tutor_profiles").select("*").limit(3);
-      if (!tps || tps.length === 0) { setFeaturedTutors([]); return; }
-      const userIds = tps.map((t) => t.user_id);
-      const { data: profiles } = await supabase.from("profiles").select("user_id, full_name, avatar_url, bio, location").in("user_id", userIds);
-      const { data: reviewData } = await supabase.from("reviews").select("tutor_id, rating").in("tutor_id", userIds);
+      const allTps = tps || [];
+      const userIds = allTps.map((t) => t.user_id);
+      const { data: profiles } = userIds.length
+        ? await supabase.from("profiles").select("user_id, full_name, avatar_url, bio, location").in("user_id", userIds)
+        : { data: [] };
+      const { data: reviewData } = userIds.length
+        ? await supabase.from("reviews").select("tutor_id, rating").in("tutor_id", userIds)
+        : { data: [] };
       const reviewMap = new Map<string, { total: number; count: number }>();
       (reviewData || []).forEach((r) => { const e = reviewMap.get(r.tutor_id) || { total: 0, count: 0 }; e.total += r.rating; e.count++; reviewMap.set(r.tutor_id, e); });
       const profileMap = new Map((profiles || []).map((p) => [p.user_id, p]));
-      setFeaturedTutors(tps.map((tp) => {
+      setFeaturedTutors(allTps.map((tp) => {
         const p = profileMap.get(tp.user_id);
         const ri = reviewMap.get(tp.user_id);
         return { user_id: tp.user_id, full_name: p?.full_name || "Unknown", avatar_url: p?.avatar_url || null, bio: p?.bio || null, location: p?.location || null, subjects: tp.subjects, hourly_rate: Number(tp.hourly_rate), experience_years: tp.experience_years, students_count: tp.students_count, lessons_count: tp.lessons_count, qualifications: tp.qualifications, availability: tp.availability, rating: ri ? Math.round((ri.total / ri.count) * 10) / 10 : 0, review_count: ri?.count || 0 };
       }));
+
+      // Subjects from all tutor profiles
+      const { data: allTutors } = await supabase.from("tutor_profiles").select("subjects");
+      const subjectCounts = new Map<string, number>();
+      (allTutors || []).forEach((t) => t.subjects.forEach((s) => subjectCounts.set(s, (subjectCounts.get(s) || 0) + 1)));
+      setSubjectList(
+        Array.from(subjectCounts.entries())
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 8)
+          .map(([name, count]) => ({ name, icon: subjectIcons[name] || "📚", count }))
+      );
+
+      // Stats
+      const tutorCount = allTutors?.length || 0;
+      const totalStudents = (allTutors || []).reduce((sum, t) => sum + ((t as any).students_count || 0), 0);
+      const totalLessons = (allTutors || []).reduce((sum, t) => sum + ((t as any).lessons_count || 0), 0);
+      // Need full tutor data for stats
+      const { data: fullTutors } = await supabase.from("tutor_profiles").select("students_count, lessons_count");
+      const realStudents = (fullTutors || []).reduce((s, t) => s + t.students_count, 0);
+      const realLessons = (fullTutors || []).reduce((s, t) => s + t.lessons_count, 0);
+      const { data: allReviews } = await supabase.from("reviews").select("rating");
+      const avgRating = allReviews && allReviews.length > 0
+        ? (allReviews.reduce((s, r) => s + r.rating, 0) / allReviews.length).toFixed(1)
+        : "—";
+      setHomeStats([
+        { label: "Active Tutors", value: tutorCount > 0 ? `${tutorCount}` : "0" },
+        { label: "Students Taught", value: realStudents > 0 ? realStudents.toLocaleString() : "0" },
+        { label: "Lessons Completed", value: realLessons > 0 ? realLessons.toLocaleString() : "0" },
+        { label: "Average Rating", value: avgRating !== "—" ? `${avgRating}★` : "—" },
+      ]);
+
+      // Recent reviews for testimonials
+      const { data: recentReviews } = await supabase
+        .from("reviews")
+        .select("id, rating, comment, student_id, tutor_id")
+        .not("comment", "is", null)
+        .order("created_at", { ascending: false })
+        .limit(3);
+      if (recentReviews && recentReviews.length > 0) {
+        const sIds = [...new Set(recentReviews.map((r) => r.student_id))];
+        const tIds = [...new Set(recentReviews.map((r) => r.tutor_id))];
+        const { data: sProfiles } = await supabase.from("profiles").select("user_id, full_name, avatar_url").in("user_id", sIds);
+        const { data: tProfiles } = await supabase.from("tutor_profiles").select("user_id, subjects").in("user_id", tIds);
+        const sMap = new Map((sProfiles || []).map((p) => [p.user_id, p]));
+        const tMap = new Map((tProfiles || []).map((p) => [p.user_id, p]));
+        setHomeReviews(recentReviews.map((r) => ({
+          id: r.id,
+          rating: r.rating,
+          comment: r.comment,
+          student_name: sMap.get(r.student_id)?.full_name || "Student",
+          student_avatar: sMap.get(r.student_id)?.avatar_url || null,
+          subject: tMap.get(r.tutor_id)?.subjects?.[0] || "General",
+        })));
+      }
     };
-    fetchFeatured();
+    fetchAll();
   }, []);
 
   const handleSearch = (e: React.FormEvent) => {

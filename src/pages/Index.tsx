@@ -165,8 +165,8 @@ const Index = () => {
             </Link>
           </div>
           <div className="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-            {tutors.slice(0, 3).map((tutor) => (
-              <TutorCard key={tutor.id} tutor={tutor} />
+            {featuredTutors.map((tutor) => (
+              <TutorCard key={tutor.user_id} tutor={tutor} />
             ))}
           </div>
           <div className="mt-6 text-center md:hidden">

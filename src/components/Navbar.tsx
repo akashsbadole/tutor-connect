@@ -45,16 +45,28 @@ const Navbar = () => {
             </Link>
           ))}
           {user && (
-            <Link
-              to="/dashboard"
-              className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-                location.pathname === "/dashboard"
-                  ? "bg-accent text-accent-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Dashboard
-            </Link>
+            <>
+              <Link
+                to="/dashboard"
+                className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                  location.pathname === "/dashboard"
+                    ? "bg-accent text-accent-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Dashboard
+              </Link>
+              <Link
+                to="/messages"
+                className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                  location.pathname === "/messages"
+                    ? "bg-accent text-accent-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <span className="flex items-center gap-1"><MessageSquare className="h-3.5 w-3.5" /> Messages</span>
+              </Link>
+            </>
           )}
         </nav>
 

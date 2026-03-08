@@ -207,7 +207,7 @@ const Index = () => {
       {/* Stats */}
       <section className="border-y border-border bg-card py-10">
         <div className="container grid grid-cols-2 gap-6 md:grid-cols-4">
-          {stats.map((stat) => (
+          {homeStats.map((stat) => (
             <div key={stat.label} className="text-center">
               <p className="font-serif text-2xl font-bold text-foreground md:text-3xl">{stat.value}</p>
               <p className="mt-1 text-sm text-muted-foreground">{stat.label}</p>

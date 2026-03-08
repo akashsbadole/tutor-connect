@@ -99,8 +99,10 @@ const Index = () => {
                 <div className="absolute -bottom-4 -left-4 rounded-xl border border-border bg-card p-4 shadow-card">
                   <div className="flex items-center gap-3">
                     <div className="flex -space-x-2">
-                      {tutors.slice(0, 3).map((t) => (
-                        <img key={t.id} src={t.avatar} alt="" className="h-8 w-8 rounded-full border-2 border-card object-cover" />
+                      {featuredTutors.slice(0, 3).map((t) => (
+                        <div key={t.user_id} className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-card bg-primary/10 text-xs font-bold text-primary overflow-hidden">
+                          {t.avatar_url ? <img src={t.avatar_url} alt="" className="h-full w-full object-cover" /> : t.full_name.charAt(0)}
+                        </div>
                       ))}
                     </div>
                     <div>

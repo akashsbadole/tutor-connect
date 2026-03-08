@@ -272,7 +272,7 @@ const Index = () => {
             <p className="mt-2 text-muted-foreground">Real stories from our community</p>
           </div>
           <div className="mt-10 grid gap-6 md:grid-cols-3">
-            {reviews.map((review) => (
+            {homeReviews.length > 0 ? homeReviews.map((review) => (
               <div key={review.id} className="rounded-xl border border-border bg-card p-6 shadow-card">
                 <div className="flex gap-1">
                   {Array.from({ length: review.rating }).map((_, i) => (
@@ -281,14 +281,22 @@ const Index = () => {
                 </div>
                 <p className="mt-4 text-sm leading-relaxed text-card-foreground">&ldquo;{review.comment}&rdquo;</p>
                 <div className="mt-5 flex items-center gap-3 border-t border-border pt-4">
-                  <img src={review.studentAvatar} alt={review.studentName} className="h-10 w-10 rounded-full object-cover" />
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary overflow-hidden">
+                    {review.student_avatar ? (
+                      <img src={review.student_avatar} alt={review.student_name} className="h-full w-full object-cover" />
+                    ) : (
+                      review.student_name.charAt(0).toUpperCase()
+                    )}
+                  </div>
                   <div>
-                    <p className="text-sm font-semibold text-card-foreground">{review.studentName}</p>
+                    <p className="text-sm font-semibold text-card-foreground">{review.student_name}</p>
                     <p className="text-xs text-muted-foreground">{review.subject} student</p>
                   </div>
                 </div>
               </div>
-            ))}
+            )) : (
+              <p className="col-span-3 text-center text-muted-foreground">No reviews yet. Be the first to leave one!</p>
+            )}
           </div>
         </div>
       </section>

@@ -1,12 +1,210 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { Link } from "react-router-dom";
+import { Search, ArrowRight, Star, CheckCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
+import TutorCard from "@/components/TutorCard";
+import { subjects, tutors, reviews, stats } from "@/lib/mock-data";
+import heroImage from "@/assets/hero-tutoring.jpg";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
+  const [searchQuery, setSearchQuery] = useState("");
+  const navigate = useNavigate();
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
+    <div className="min-h-screen bg-background">
+      <Navbar />
+
+      {/* Hero */}
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-accent via-background to-warm opacity-80" />
+        <div className="container relative py-20 lg:py-28">
+          <div className="grid items-center gap-12 lg:grid-cols-2">
+            <div className="animate-fade-in">
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-accent px-4 py-1.5 text-sm font-medium text-accent-foreground">
+                <CheckCircle className="h-4 w-4 text-primary" />
+                Trusted by 50,000+ students worldwide
+              </div>
+              <h1 className="font-serif text-4xl font-bold leading-tight text-foreground md:text-5xl lg:text-6xl">
+                Find the perfect <span className="text-gradient-primary">tutor</span> for you
+              </h1>
+              <p className="mt-5 max-w-lg text-lg text-muted-foreground">
+                Connect with expert tutors in any subject. Personalized 1-on-1 lessons that fit your schedule and learning goals.
+              </p>
+
+              <form onSubmit={handleSearch} className="mt-8 flex max-w-md gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    placeholder="Search by subject, name, or topic..."
+                    className="pl-10"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+                <Button type="submit">Search</Button>
+              </form>
+
+              <div className="mt-6 flex items-center gap-6 text-sm text-muted-foreground">
+                <span>Popular:</span>
+                {["Math", "English", "Physics", "Coding"].map((s) => (
+                  <Link
+                    key={s}
+                    to={`/search?q=${s}`}
+                    className="rounded-full border border-border px-3 py-1 transition-colors hover:border-primary hover:text-primary"
+                  >
+                    {s}
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            <div className="hidden lg:block" style={{ animationDelay: "0.2s" }}>
+              <div className="animate-fade-in relative">
+                <img
+                  src={heroImage}
+                  alt="Student and tutor learning together"
+                  className="rounded-2xl shadow-elevated"
+                />
+                <div className="absolute -bottom-4 -left-4 rounded-xl border border-border bg-card p-4 shadow-card">
+                  <div className="flex items-center gap-3">
+                    <div className="flex -space-x-2">
+                      {tutors.slice(0, 3).map((t) => (
+                        <img key={t.id} src={t.avatar} alt="" className="h-8 w-8 rounded-full border-2 border-card object-cover" />
+                      ))}
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-card-foreground">2,500+ tutors</p>
+                      <p className="text-xs text-muted-foreground">Ready to help you learn</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Stats */}
+      <section className="border-y border-border bg-card py-10">
+        <div className="container grid grid-cols-2 gap-6 md:grid-cols-4">
+          {stats.map((stat) => (
+            <div key={stat.label} className="text-center">
+              <p className="font-serif text-2xl font-bold text-foreground md:text-3xl">{stat.value}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{stat.label}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Subjects */}
+      <section className="py-16 lg:py-20">
+        <div className="container">
+          <div className="text-center">
+            <h2 className="font-serif text-3xl font-bold text-foreground">Browse by Subject</h2>
+            <p className="mt-2 text-muted-foreground">Explore tutors across all subjects and skill levels</p>
+          </div>
+          <div className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-4">
+            {subjects.map((subject) => (
+              <Link
+                key={subject.name}
+                to={`/search?q=${subject.name}`}
+                className="group flex flex-col items-center rounded-xl border border-border bg-card p-6 shadow-card transition-all duration-300 hover:border-primary/30 hover:shadow-card-hover"
+              >
+                <span className="text-3xl">{subject.icon}</span>
+                <h3 className="mt-3 font-semibold text-card-foreground">{subject.name}</h3>
+                <p className="mt-1 text-sm text-muted-foreground">{subject.count} tutors</p>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Featured Tutors */}
+      <section className="bg-muted/30 py-16 lg:py-20">
+        <div className="container">
+          <div className="flex items-end justify-between">
+            <div>
+              <h2 className="font-serif text-3xl font-bold text-foreground">Featured Tutors</h2>
+              <p className="mt-2 text-muted-foreground">Top-rated tutors recommended for you</p>
+            </div>
+            <Link to="/search" className="hidden items-center gap-1 text-sm font-medium text-primary hover:underline md:flex">
+              View all tutors <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+          <div className="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+            {tutors.slice(0, 3).map((tutor) => (
+              <TutorCard key={tutor.id} tutor={tutor} />
+            ))}
+          </div>
+          <div className="mt-6 text-center md:hidden">
+            <Link to="/search">
+              <Button variant="outline">View all tutors</Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials */}
+      <section className="py-16 lg:py-20">
+        <div className="container">
+          <div className="text-center">
+            <h2 className="font-serif text-3xl font-bold text-foreground">What Students Say</h2>
+            <p className="mt-2 text-muted-foreground">Real stories from our community</p>
+          </div>
+          <div className="mt-10 grid gap-6 md:grid-cols-3">
+            {reviews.map((review) => (
+              <div key={review.id} className="rounded-xl border border-border bg-card p-6 shadow-card">
+                <div className="flex gap-1">
+                  {Array.from({ length: review.rating }).map((_, i) => (
+                    <Star key={i} className="h-4 w-4 fill-rating text-rating" />
+                  ))}
+                </div>
+                <p className="mt-4 text-sm leading-relaxed text-card-foreground">&ldquo;{review.comment}&rdquo;</p>
+                <div className="mt-5 flex items-center gap-3 border-t border-border pt-4">
+                  <img src={review.studentAvatar} alt={review.studentName} className="h-10 w-10 rounded-full object-cover" />
+                  <div>
+                    <p className="text-sm font-semibold text-card-foreground">{review.studentName}</p>
+                    <p className="text-xs text-muted-foreground">{review.subject} student</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="py-16 lg:py-20">
+        <div className="container">
+          <div className="rounded-2xl bg-primary px-8 py-14 text-center shadow-elevated">
+            <h2 className="font-serif text-3xl font-bold text-primary-foreground md:text-4xl">
+              Ready to start learning?
+            </h2>
+            <p className="mx-auto mt-4 max-w-md text-primary-foreground/80">
+              Join thousands of students achieving their goals with personalized tutoring.
+            </p>
+            <div className="mt-8 flex justify-center gap-4">
+              <Link to="/search">
+                <Button size="lg" variant="secondary">Find a Tutor</Button>
+              </Link>
+              <Button size="lg" variant="outline" className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10">
+                Become a Tutor
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <Footer />
     </div>
   );
 };

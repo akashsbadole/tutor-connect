@@ -5,10 +5,12 @@ import { Input } from "@/components/ui/input";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import TutorCard from "@/components/TutorCard";
-import { subjects, tutors, reviews, stats } from "@/lib/mock-data";
+import { subjects, reviews, stats } from "@/lib/mock-data";
 import heroImage from "@/assets/hero-tutoring.jpg";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import type { TutorWithProfile } from "@/pages/SearchTutors";
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");

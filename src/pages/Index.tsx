@@ -35,6 +35,14 @@ interface SubjectInfo {
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [featuredTutors, setFeaturedTutors] = useState<TutorWithProfile[]>([]);
+  const [subjectList, setSubjectList] = useState<SubjectInfo[]>([]);
+  const [homeReviews, setHomeReviews] = useState<HomeReview[]>([]);
+  const [homeStats, setHomeStats] = useState([
+    { label: "Active Tutors", value: "0" },
+    { label: "Students Taught", value: "0" },
+    { label: "Lessons Completed", value: "0" },
+    { label: "Average Rating", value: "—" },
+  ]);
   const navigate = useNavigate();
 
   useEffect(() => {

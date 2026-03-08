@@ -36,6 +36,9 @@ const App = () => (
             <Route path="/dashboard" element={
               <ProtectedRoute requireProfileComplete><Dashboard /></ProtectedRoute>
             } />
+            <Route path="/messages" element={
+              <ProtectedRoute requireProfileComplete><Messages /></ProtectedRoute>
+            } />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

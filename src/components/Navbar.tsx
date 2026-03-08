@@ -110,13 +110,22 @@ const Navbar = () => {
               </Link>
             ))}
             {user && (
-              <Link
-                to="/dashboard"
-                onClick={() => setMobileOpen(false)}
-                className="rounded-md px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-              >
-                Dashboard
-              </Link>
+              <>
+                <Link
+                  to="/dashboard"
+                  onClick={() => setMobileOpen(false)}
+                  className="rounded-md px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                >
+                  Dashboard
+                </Link>
+                <Link
+                  to="/messages"
+                  onClick={() => setMobileOpen(false)}
+                  className="rounded-md px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                >
+                  Messages
+                </Link>
+              </>
             )}
             <div className="mt-3 flex gap-2">
               {user ? (

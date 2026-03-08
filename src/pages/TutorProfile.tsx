@@ -253,7 +253,18 @@ const TutorProfile = () => {
                   <span className="font-serif text-3xl font-bold text-card-foreground">${tutor.hourly_rate}</span>
                   <span className="text-muted-foreground">/hour</span>
                 </div>
-                <Button className="mt-5 w-full" size="lg">Book a Lesson</Button>
+                {!isSelf ? (
+                  <BookingDialog
+                    tutorId={tutor.user_id}
+                    tutorName={tutor.full_name}
+                    hourlyRate={tutor.hourly_rate}
+                    availability={tutor.availability}
+                  >
+                    <Button className="mt-5 w-full" size="lg">Book a Lesson</Button>
+                  </BookingDialog>
+                ) : (
+                  <Button className="mt-5 w-full" size="lg" disabled>Book a Lesson</Button>
+                )}
                 {!isSelf ? (
                   <Link to={`/messages?with=${tutor.user_id}`}>
                     <Button variant="outline" className="mt-3 w-full gap-2" size="lg">

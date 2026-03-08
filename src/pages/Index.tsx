@@ -14,7 +14,27 @@ import type { TutorWithProfile } from "@/pages/SearchTutors";
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [featuredTutors, setFeaturedTutors] = useState<TutorWithProfile[]>([]);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchFeatured = async () => {
+      const { data: tps } = await supabase.from("tutor_profiles").select("*").limit(3);
+      if (!tps || tps.length === 0) { setFeaturedTutors([]); return; }
+      const userIds = tps.map((t) => t.user_id);
+      const { data: profiles } = await supabase.from("profiles").select("user_id, full_name, avatar_url, bio, location").in("user_id", userIds);
+      const { data: reviewData } = await supabase.from("reviews").select("tutor_id, rating").in("tutor_id", userIds);
+      const reviewMap = new Map<string, { total: number; count: number }>();
+      (reviewData || []).forEach((r) => { const e = reviewMap.get(r.tutor_id) || { total: 0, count: 0 }; e.total += r.rating; e.count++; reviewMap.set(r.tutor_id, e); });
+      const profileMap = new Map((profiles || []).map((p) => [p.user_id, p]));
+      setFeaturedTutors(tps.map((tp) => {
+        const p = profileMap.get(tp.user_id);
+        const ri = reviewMap.get(tp.user_id);
+        return { user_id: tp.user_id, full_name: p?.full_name || "Unknown", avatar_url: p?.avatar_url || null, bio: p?.bio || null, location: p?.location || null, subjects: tp.subjects, hourly_rate: Number(tp.hourly_rate), experience_years: tp.experience_years, students_count: tp.students_count, lessons_count: tp.lessons_count, qualifications: tp.qualifications, availability: tp.availability, rating: ri ? Math.round((ri.total / ri.count) * 10) / 10 : 0, review_count: ri?.count || 0 };
+      }));
+    };
+    fetchFeatured();
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

@@ -5,14 +5,36 @@ import { Input } from "@/components/ui/input";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import TutorCard from "@/components/TutorCard";
-import { subjects, tutors, reviews, stats } from "@/lib/mock-data";
+import { subjects, reviews, stats } from "@/lib/mock-data";
 import heroImage from "@/assets/hero-tutoring.jpg";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import type { TutorWithProfile } from "@/pages/SearchTutors";
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [featuredTutors, setFeaturedTutors] = useState<TutorWithProfile[]>([]);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchFeatured = async () => {
+      const { data: tps } = await supabase.from("tutor_profiles").select("*").limit(3);
+      if (!tps || tps.length === 0) { setFeaturedTutors([]); return; }
+      const userIds = tps.map((t) => t.user_id);
+      const { data: profiles } = await supabase.from("profiles").select("user_id, full_name, avatar_url, bio, location").in("user_id", userIds);
+      const { data: reviewData } = await supabase.from("reviews").select("tutor_id, rating").in("tutor_id", userIds);
+      const reviewMap = new Map<string, { total: number; count: number }>();
+      (reviewData || []).forEach((r) => { const e = reviewMap.get(r.tutor_id) || { total: 0, count: 0 }; e.total += r.rating; e.count++; reviewMap.set(r.tutor_id, e); });
+      const profileMap = new Map((profiles || []).map((p) => [p.user_id, p]));
+      setFeaturedTutors(tps.map((tp) => {
+        const p = profileMap.get(tp.user_id);
+        const ri = reviewMap.get(tp.user_id);
+        return { user_id: tp.user_id, full_name: p?.full_name || "Unknown", avatar_url: p?.avatar_url || null, bio: p?.bio || null, location: p?.location || null, subjects: tp.subjects, hourly_rate: Number(tp.hourly_rate), experience_years: tp.experience_years, students_count: tp.students_count, lessons_count: tp.lessons_count, qualifications: tp.qualifications, availability: tp.availability, rating: ri ? Math.round((ri.total / ri.count) * 10) / 10 : 0, review_count: ri?.count || 0 };
+      }));
+    };
+    fetchFeatured();
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,8 +99,10 @@ const Index = () => {
                 <div className="absolute -bottom-4 -left-4 rounded-xl border border-border bg-card p-4 shadow-card">
                   <div className="flex items-center gap-3">
                     <div className="flex -space-x-2">
-                      {tutors.slice(0, 3).map((t) => (
-                        <img key={t.id} src={t.avatar} alt="" className="h-8 w-8 rounded-full border-2 border-card object-cover" />
+                      {featuredTutors.slice(0, 3).map((t) => (
+                        <div key={t.user_id} className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-card bg-primary/10 text-xs font-bold text-primary overflow-hidden">
+                          {t.avatar_url ? <img src={t.avatar_url} alt="" className="h-full w-full object-cover" /> : t.full_name.charAt(0)}
+                        </div>
                       ))}
                     </div>
                     <div>
@@ -141,8 +165,8 @@ const Index = () => {
             </Link>
           </div>
           <div className="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-            {tutors.slice(0, 3).map((tutor) => (
-              <TutorCard key={tutor.id} tutor={tutor} />
+            {featuredTutors.map((tutor) => (
+              <TutorCard key={tutor.user_id} tutor={tutor} />
             ))}
           </div>
           <div className="mt-6 text-center md:hidden">

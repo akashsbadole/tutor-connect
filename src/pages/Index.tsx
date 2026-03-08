@@ -5,35 +5,122 @@ import { Input } from "@/components/ui/input";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import TutorCard from "@/components/TutorCard";
-import { subjects, reviews, stats } from "@/lib/mock-data";
 import heroImage from "@/assets/hero-tutoring.jpg";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import type { TutorWithProfile } from "@/pages/SearchTutors";
 
+const subjectIcons: Record<string, string> = {
+  Mathematics: "📐", English: "📝", Physics: "⚛️", Chemistry: "🧪",
+  Biology: "🧬", "Computer Science": "💻", Music: "🎵", Languages: "🌍",
+  History: "📜", Geography: "🌎", Art: "🎨", Economics: "📊",
+};
+
+interface HomeReview {
+  id: string;
+  rating: number;
+  comment: string | null;
+  student_name: string;
+  student_avatar: string | null;
+  subject: string;
+}
+
+interface SubjectInfo {
+  name: string;
+  icon: string;
+  count: number;
+}
+
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [featuredTutors, setFeaturedTutors] = useState<TutorWithProfile[]>([]);
+  const [subjectList, setSubjectList] = useState<SubjectInfo[]>([]);
+  const [homeReviews, setHomeReviews] = useState<HomeReview[]>([]);
+  const [homeStats, setHomeStats] = useState([
+    { label: "Active Tutors", value: "0" },
+    { label: "Students Taught", value: "0" },
+    { label: "Lessons Completed", value: "0" },
+    { label: "Average Rating", value: "—" },
+  ]);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchFeatured = async () => {
+    const fetchAll = async () => {
+      // Featured tutors
       const { data: tps } = await supabase.from("tutor_profiles").select("*").limit(3);
-      if (!tps || tps.length === 0) { setFeaturedTutors([]); return; }
-      const userIds = tps.map((t) => t.user_id);
-      const { data: profiles } = await supabase.from("profiles").select("user_id, full_name, avatar_url, bio, location").in("user_id", userIds);
-      const { data: reviewData } = await supabase.from("reviews").select("tutor_id, rating").in("tutor_id", userIds);
+      const allTps = tps || [];
+      const userIds = allTps.map((t) => t.user_id);
+      const { data: profiles } = userIds.length
+        ? await supabase.from("profiles").select("user_id, full_name, avatar_url, bio, location").in("user_id", userIds)
+        : { data: [] };
+      const { data: reviewData } = userIds.length
+        ? await supabase.from("reviews").select("tutor_id, rating").in("tutor_id", userIds)
+        : { data: [] };
       const reviewMap = new Map<string, { total: number; count: number }>();
       (reviewData || []).forEach((r) => { const e = reviewMap.get(r.tutor_id) || { total: 0, count: 0 }; e.total += r.rating; e.count++; reviewMap.set(r.tutor_id, e); });
       const profileMap = new Map((profiles || []).map((p) => [p.user_id, p]));
-      setFeaturedTutors(tps.map((tp) => {
+      setFeaturedTutors(allTps.map((tp) => {
         const p = profileMap.get(tp.user_id);
         const ri = reviewMap.get(tp.user_id);
         return { user_id: tp.user_id, full_name: p?.full_name || "Unknown", avatar_url: p?.avatar_url || null, bio: p?.bio || null, location: p?.location || null, subjects: tp.subjects, hourly_rate: Number(tp.hourly_rate), experience_years: tp.experience_years, students_count: tp.students_count, lessons_count: tp.lessons_count, qualifications: tp.qualifications, availability: tp.availability, rating: ri ? Math.round((ri.total / ri.count) * 10) / 10 : 0, review_count: ri?.count || 0 };
       }));
+
+      // Subjects from all tutor profiles
+      const { data: allTutors } = await supabase.from("tutor_profiles").select("subjects");
+      const subjectCounts = new Map<string, number>();
+      (allTutors || []).forEach((t) => t.subjects.forEach((s) => subjectCounts.set(s, (subjectCounts.get(s) || 0) + 1)));
+      setSubjectList(
+        Array.from(subjectCounts.entries())
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 8)
+          .map(([name, count]) => ({ name, icon: subjectIcons[name] || "📚", count }))
+      );
+
+      // Stats
+      const tutorCount = allTutors?.length || 0;
+      const totalStudents = (allTutors || []).reduce((sum, t) => sum + ((t as any).students_count || 0), 0);
+      const totalLessons = (allTutors || []).reduce((sum, t) => sum + ((t as any).lessons_count || 0), 0);
+      // Need full tutor data for stats
+      const { data: fullTutors } = await supabase.from("tutor_profiles").select("students_count, lessons_count");
+      const realStudents = (fullTutors || []).reduce((s, t) => s + t.students_count, 0);
+      const realLessons = (fullTutors || []).reduce((s, t) => s + t.lessons_count, 0);
+      const { data: allReviews } = await supabase.from("reviews").select("rating");
+      const avgRating = allReviews && allReviews.length > 0
+        ? (allReviews.reduce((s, r) => s + r.rating, 0) / allReviews.length).toFixed(1)
+        : "—";
+      setHomeStats([
+        { label: "Active Tutors", value: tutorCount > 0 ? `${tutorCount}` : "0" },
+        { label: "Students Taught", value: realStudents > 0 ? realStudents.toLocaleString() : "0" },
+        { label: "Lessons Completed", value: realLessons > 0 ? realLessons.toLocaleString() : "0" },
+        { label: "Average Rating", value: avgRating !== "—" ? `${avgRating}★` : "—" },
+      ]);
+
+      // Recent reviews for testimonials
+      const { data: recentReviews } = await supabase
+        .from("reviews")
+        .select("id, rating, comment, student_id, tutor_id")
+        .not("comment", "is", null)
+        .order("created_at", { ascending: false })
+        .limit(3);
+      if (recentReviews && recentReviews.length > 0) {
+        const sIds = [...new Set(recentReviews.map((r) => r.student_id))];
+        const tIds = [...new Set(recentReviews.map((r) => r.tutor_id))];
+        const { data: sProfiles } = await supabase.from("profiles").select("user_id, full_name, avatar_url").in("user_id", sIds);
+        const { data: tProfiles } = await supabase.from("tutor_profiles").select("user_id, subjects").in("user_id", tIds);
+        const sMap = new Map((sProfiles || []).map((p) => [p.user_id, p]));
+        const tMap = new Map((tProfiles || []).map((p) => [p.user_id, p]));
+        setHomeReviews(recentReviews.map((r) => ({
+          id: r.id,
+          rating: r.rating,
+          comment: r.comment,
+          student_name: sMap.get(r.student_id)?.full_name || "Student",
+          student_avatar: sMap.get(r.student_id)?.avatar_url || null,
+          subject: tMap.get(r.tutor_id)?.subjects?.[0] || "General",
+        })));
+      }
     };
-    fetchFeatured();
+    fetchAll();
   }, []);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -120,7 +207,7 @@ const Index = () => {
       {/* Stats */}
       <section className="border-y border-border bg-card py-10">
         <div className="container grid grid-cols-2 gap-6 md:grid-cols-4">
-          {stats.map((stat) => (
+          {homeStats.map((stat) => (
             <div key={stat.label} className="text-center">
               <p className="font-serif text-2xl font-bold text-foreground md:text-3xl">{stat.value}</p>
               <p className="mt-1 text-sm text-muted-foreground">{stat.label}</p>
@@ -137,7 +224,7 @@ const Index = () => {
             <p className="mt-2 text-muted-foreground">Explore tutors across all subjects and skill levels</p>
           </div>
           <div className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-4">
-            {subjects.map((subject) => (
+            {subjectList.map((subject) => (
               <Link
                 key={subject.name}
                 to={`/search?q=${subject.name}`}
@@ -185,7 +272,7 @@ const Index = () => {
             <p className="mt-2 text-muted-foreground">Real stories from our community</p>
           </div>
           <div className="mt-10 grid gap-6 md:grid-cols-3">
-            {reviews.map((review) => (
+            {homeReviews.length > 0 ? homeReviews.map((review) => (
               <div key={review.id} className="rounded-xl border border-border bg-card p-6 shadow-card">
                 <div className="flex gap-1">
                   {Array.from({ length: review.rating }).map((_, i) => (
@@ -194,14 +281,22 @@ const Index = () => {
                 </div>
                 <p className="mt-4 text-sm leading-relaxed text-card-foreground">&ldquo;{review.comment}&rdquo;</p>
                 <div className="mt-5 flex items-center gap-3 border-t border-border pt-4">
-                  <img src={review.studentAvatar} alt={review.studentName} className="h-10 w-10 rounded-full object-cover" />
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary overflow-hidden">
+                    {review.student_avatar ? (
+                      <img src={review.student_avatar} alt={review.student_name} className="h-full w-full object-cover" />
+                    ) : (
+                      review.student_name.charAt(0).toUpperCase()
+                    )}
+                  </div>
                   <div>
-                    <p className="text-sm font-semibold text-card-foreground">{review.studentName}</p>
+                    <p className="text-sm font-semibold text-card-foreground">{review.student_name}</p>
                     <p className="text-xs text-muted-foreground">{review.subject} student</p>
                   </div>
                 </div>
               </div>
-            ))}
+            )) : (
+              <p className="col-span-3 text-center text-muted-foreground">No reviews yet. Be the first to leave one!</p>
+            )}
           </div>
         </div>
       </section>

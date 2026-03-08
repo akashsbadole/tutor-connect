@@ -119,9 +119,11 @@ const TutorProfile = () => {
                   <span className="text-muted-foreground">/hour</span>
                 </div>
                 <Button className="mt-5 w-full" size="lg">Book a Lesson</Button>
-                <Button variant="outline" className="mt-3 w-full gap-2" size="lg">
-                  <MessageSquare className="h-4 w-4" /> Send Message
-                </Button>
+                <Link to={`/messages?with=${tutor.id}`}>
+                  <Button variant="outline" className="mt-3 w-full gap-2" size="lg">
+                    <MessageSquare className="h-4 w-4" /> Send Message
+                  </Button>
+                </Link>
               </div>
 
               <div className="rounded-xl border border-border bg-card p-6 shadow-card">

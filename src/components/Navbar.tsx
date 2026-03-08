@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Search, Menu, X, GraduationCap, LogOut, LayoutDashboard } from "lucide-react";
+import { Search, Menu, X, GraduationCap, LogOut, MessageSquare } from "lucide-react";
 import { useAuth } from "./AuthProvider";
 
 const Navbar = () => {
@@ -45,16 +45,28 @@ const Navbar = () => {
             </Link>
           ))}
           {user && (
-            <Link
-              to="/dashboard"
-              className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-                location.pathname === "/dashboard"
-                  ? "bg-accent text-accent-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Dashboard
-            </Link>
+            <>
+              <Link
+                to="/dashboard"
+                className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                  location.pathname === "/dashboard"
+                    ? "bg-accent text-accent-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Dashboard
+              </Link>
+              <Link
+                to="/messages"
+                className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                  location.pathname === "/messages"
+                    ? "bg-accent text-accent-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <span className="flex items-center gap-1"><MessageSquare className="h-3.5 w-3.5" /> Messages</span>
+              </Link>
+            </>
           )}
         </nav>
 
@@ -98,13 +110,22 @@ const Navbar = () => {
               </Link>
             ))}
             {user && (
-              <Link
-                to="/dashboard"
-                onClick={() => setMobileOpen(false)}
-                className="rounded-md px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-              >
-                Dashboard
-              </Link>
+              <>
+                <Link
+                  to="/dashboard"
+                  onClick={() => setMobileOpen(false)}
+                  className="rounded-md px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                >
+                  Dashboard
+                </Link>
+                <Link
+                  to="/messages"
+                  onClick={() => setMobileOpen(false)}
+                  className="rounded-md px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                >
+                  Messages
+                </Link>
+              </>
             )}
             <div className="mt-3 flex gap-2">
               {user ? (

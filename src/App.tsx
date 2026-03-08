@@ -12,6 +12,7 @@ import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import ProfileSetup from "./pages/ProfileSetup";
 import Dashboard from "./pages/Dashboard";
+import Messages from "./pages/Messages";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +35,9 @@ const App = () => (
             } />
             <Route path="/dashboard" element={
               <ProtectedRoute requireProfileComplete><Dashboard /></ProtectedRoute>
+            } />
+            <Route path="/messages" element={
+              <ProtectedRoute requireProfileComplete><Messages /></ProtectedRoute>
             } />
             <Route path="*" element={<NotFound />} />
           </Routes>

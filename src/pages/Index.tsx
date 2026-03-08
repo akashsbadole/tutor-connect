@@ -224,7 +224,7 @@ const Index = () => {
             <p className="mt-2 text-muted-foreground">Explore tutors across all subjects and skill levels</p>
           </div>
           <div className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-4">
-            {subjects.map((subject) => (
+            {subjectList.map((subject) => (
               <Link
                 key={subject.name}
                 to={`/search?q=${subject.name}`}

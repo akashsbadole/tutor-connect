@@ -9,12 +9,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { subjects as subjectList } from "@/lib/mock-data";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { X } from "lucide-react";
+import { X, Plus } from "lucide-react";
+
+const subjectList = [
+  { name: "Mathematics" }, { name: "English" }, { name: "Physics" },
+  { name: "Chemistry" }, { name: "Biology" }, { name: "Computer Science" },
+  { name: "Music" }, { name: "Languages" }, { name: "History" },
+  { name: "Geography" }, { name: "Art" }, { name: "Economics" },
+];
+
+const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const HOURS = Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, "0")}:00`);
 
 const tutorSchema = z.object({
   fullName: z.string().trim().min(1, "Required").max(100),
@@ -35,11 +44,76 @@ const studentSchema = z.object({
 type TutorValues = z.infer<typeof tutorSchema>;
 type StudentValues = z.infer<typeof studentSchema>;
 
+interface TimeSlot {
+  day: string;
+  start: string;
+  end: string;
+}
+
+const AvailabilityEditor = ({ slots, onChange }: { slots: TimeSlot[]; onChange: (s: TimeSlot[]) => void }) => {
+  const [day, setDay] = useState("Mon");
+  const [start, setStart] = useState("09:00");
+  const [end, setEnd] = useState("12:00");
+
+  const addSlot = () => {
+    if (start >= end) return;
+    const label = `${day} ${start}-${end}`;
+    if (slots.some((s) => `${s.day} ${s.start}-${s.end}` === label)) return;
+    onChange([...slots, { day, start, end }]);
+  };
+
+  const removeSlot = (idx: number) => onChange(slots.filter((_, i) => i !== idx));
+
+  return (
+    <div className="space-y-3">
+      <p className="text-sm font-medium">Weekly Availability</p>
+      <div className="flex flex-wrap gap-2">
+        {slots.map((s, i) => (
+          <span key={i} className="inline-flex items-center gap-1 rounded-full border border-primary bg-accent px-3 py-1 text-sm text-accent-foreground">
+            {s.day} {s.start}-{s.end}
+            <button type="button" onClick={() => removeSlot(i)} className="ml-1 text-muted-foreground hover:text-destructive">
+              <X className="h-3 w-3" />
+            </button>
+          </span>
+        ))}
+        {slots.length === 0 && <p className="text-sm text-muted-foreground">No slots added yet</p>}
+      </div>
+      <div className="flex flex-wrap items-end gap-2">
+        <div>
+          <label className="text-xs text-muted-foreground">Day</label>
+          <Select value={day} onValueChange={setDay}>
+            <SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
+            <SelectContent>{DAYS.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}</SelectContent>
+          </Select>
+        </div>
+        <div>
+          <label className="text-xs text-muted-foreground">Start</label>
+          <Select value={start} onValueChange={setStart}>
+            <SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
+            <SelectContent>{HOURS.map((h) => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent>
+          </Select>
+        </div>
+        <div>
+          <label className="text-xs text-muted-foreground">End</label>
+          <Select value={end} onValueChange={setEnd}>
+            <SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
+            <SelectContent>{HOURS.map((h) => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent>
+          </Select>
+        </div>
+        <Button type="button" variant="outline" size="sm" onClick={addSlot} className="gap-1">
+          <Plus className="h-3 w-3" /> Add
+        </Button>
+      </div>
+    </div>
+  );
+};
+
 const ProfileSetup = () => {
   const { user, profile, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [submitting, setSubmitting] = useState(false);
+  const [availability, setAvailability] = useState<TimeSlot[]>([]);
 
   const roleType = profile?.role_type || (user?.user_metadata?.role_type as "student" | "tutor") || "student";
   const isTutor = roleType === "tutor";
@@ -86,7 +160,8 @@ const ProfileSetup = () => {
       .map((q) => q.trim())
       .filter(Boolean);
 
-    // Update profile
+    const availabilityStrings = availability.map((s) => `${s.day} ${s.start}-${s.end}`);
+
     const { error: profileErr } = await supabase
       .from("profiles")
       .update({
@@ -98,14 +173,13 @@ const ProfileSetup = () => {
       })
       .eq("user_id", user.id);
 
-    // Create tutor profile
     const { error: tutorErr } = await supabase.from("tutor_profiles").upsert({
       user_id: user.id,
       subjects: values.subjects,
       hourly_rate: values.hourlyRate,
       experience_years: values.experienceYears,
       qualifications,
-      availability: [],
+      availability: availabilityStrings,
     });
 
     setSubmitting(false);
@@ -228,6 +302,9 @@ const ProfileSetup = () => {
                     <FormMessage />
                   </FormItem>
                 )} />
+
+                <AvailabilityEditor slots={availability} onChange={setAvailability} />
+
                 <Button type="submit" size="lg" className="w-full" disabled={submitting}>
                   {submitting ? "Saving..." : "Complete Profile"}
                 </Button>

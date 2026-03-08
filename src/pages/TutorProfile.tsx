@@ -9,6 +9,7 @@ import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 import { toast } from "sonner";
+import BookingDialog from "@/components/BookingDialog";
 
 interface TutorData {
   user_id: string;

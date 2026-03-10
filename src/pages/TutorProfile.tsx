@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 import { toast } from "sonner";
 import BookingDialog from "@/components/BookingDialog";
+import AvailabilityCalendar from "@/components/AvailabilityCalendar";
 
 interface TutorData {
   user_id: string;

@@ -298,17 +298,7 @@ const TutorProfile = () => {
               </div>
 
               {tutor.availability.length > 0 && (
-                <div className="rounded-xl border border-border bg-card p-6 shadow-card">
-                  <h3 className="font-serif text-sm font-bold text-card-foreground">Availability</h3>
-                  <ul className="mt-3 space-y-2">
-                    {tutor.availability.map((slot, i) => (
-                      <li key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Clock className="h-3.5 w-3.5 text-success" />
-                        {String(slot)}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                <AvailabilityCalendar availability={tutor.availability} />
               )}
             </div>
           </div>
